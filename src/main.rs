@@ -21,11 +21,14 @@ struct CoreState {
 impl CoreState {
   
   fn new() -> CoreState {
+    use std::path::Path;
+    
     let title = format!( "Atina v{}", version!() );
 
     let root = RootConsole::initializer()
       .size( 80, 50 )
       .title( &title )
+      .font( Path::new( "data/terminal.png" ), tcod::FontLayout::AsciiInCol )
       .init();
     
     tcod::system::set_fps( 60 );
@@ -78,7 +81,7 @@ impl CoreState {
     
     let mut map;
     
-    match load_map( Path::new( "test.map" ) ) {
+    match load_map( Path::new( "data/test.map" ) ) {
       Result::Err( MapLoadingError::ParseIntError( err ) ) => { println!( "{:?}", err.description() ); return },
       Result::Err( err ) => { println!( "{:?}", err ); return },
       Result::Ok( m ) => map = m
