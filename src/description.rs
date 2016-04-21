@@ -52,31 +52,66 @@ pub trait Describe {
 }
 
 pub fn load_descriptions() {
+  DESCRIPTIONS.with( |descs| {
+        let mut d = descs.borrow_mut();
+        load_file( "tile", &mut d );
+      } );
+}
+
+fn load_file( name : &str, descs : &mut HashMap<String, Description> ) {
   use std::path::Path;
   use std::io::Read;
   use std::fs::File;
   use toml::{Parser, Value};
   
-  let mut content = String::new();
+  let filename = format!( "data/{}.toml", name );
   
-  File::open( Path::new( "data/tile.toml" ) ).unwrap().read_to_string( &mut content );
+  let mut data_file = File::open( Path::new( &filename ) )
+    .expect( &format!( "Failed to load data file: '{}'", filename ) );
   
-  let mut parser = Parser::new( &content );
+  let file_size = data_file.metadata().map( |md| md.len() )
+    .expect( &format!( "Failed to get file size of data file '{}'", filename ) );
+  
+  let mut source = String::with_capacity( file_size as usize );
+  
+  data_file.read_to_string( &mut source )
+    .expect( &format!( "Failed to read data file: '{}'", filename ) );
+  
+  let mut parser = Parser::new( &source );
+  
+  let mut data;
+  
   match parser.parse() {
-    None => panic!( "{:?}", parser.errors ),
-    Some( v ) => {
-      DESCRIPTIONS.with( |descs| {
-        let mut d = descs.borrow_mut();
-        
-        for (k, w) in v.into_iter() {
-          let t = w.as_table().unwrap();
-          let qualname = format!( "tile.{}", k );
-          let name = t.get( "name" ).unwrap().as_str().unwrap().to_string();
-          let desc = t.get( "description" ).unwrap().as_str().unwrap().to_string();
-          d.insert( qualname, Description::new( name, desc ) );
-        }
-      } );
-    }
+    None => panic!( "Failed to parse data file: '{}'", filename ),
+    Some( d ) => data = d
   }
   
+  for (entry_name, entry_value) in data.into_iter() {
+    let mut entry_table;
+    
+    match entry_value {
+      Value::Table( tbl ) => entry_table = tbl,
+      _ => panic!( "Failed to decode data file: '{}'", filename )
+    }
+    
+    let desc_name;
+    
+    match entry_table.remove( "name" ) {
+      Some( Value::String( s ) ) => desc_name = s,
+      _ => panic!( "Failed to decode data file: '{}'", filename )
+    }
+    
+    let desc_description;
+    
+    match entry_table.remove( "description" ) {
+      Some( Value::String( s ) ) => desc_description = s,
+      _ => panic!( "Failed to decode data file: '{}'", filename )
+    }
+    
+    let qualifying_name = format!( "{}.{}", name, entry_name );
+    
+    descs.insert( qualifying_name
+                , Description::new( desc_name, desc_description ) );
+    
+  }
 }
