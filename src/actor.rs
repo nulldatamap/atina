@@ -60,9 +60,9 @@ impl Action {
 pub struct Actor {
   pub active   : bool,
   pub action   : Action,
-  pub pos          : Position,
-  pub stats        : Stats,
-  pub graphics     : Graphics
+  pub pos      : Position,
+  pub stats    : Stats,
+  pub graphics : Graphics
 }
 
 impl Describe for Actor {

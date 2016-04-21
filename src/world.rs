@@ -37,7 +37,7 @@ impl World {
   }
   
   pub fn update( &mut self ) {
-    let duration = self.player.borrow().actor.action.duration;
+    let duration = self.shortest_action_duration();
     
     if duration == 0 {
       return
@@ -57,6 +57,20 @@ impl World {
         _ => {}
       }
     }
+  }
+  
+  fn shortest_action_duration( &mut self ) -> u32 {
+    let mut shortest = self.player.borrow().actor.action.duration;
+    
+    self.actors.iter().fold( shortest, | sh, ac | {
+      let actor = ac.borrow();
+      
+      if actor.action.duration != 0 && actor.action.duration > sh {
+        actor.action.duration
+      } else {
+        sh
+      }
+    } )
   }
   
   pub fn render<C : Console>( &self, ctx : &mut C ) {
