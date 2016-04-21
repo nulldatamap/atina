@@ -55,6 +55,10 @@ impl Action {
   pub fn none() -> Action {
     Action { duration: 0, kind: ActionKind::None }
   }
+  
+  pub fn is_active( &self ) -> bool {
+    self.kind != ActionKind::None
+  }
 }
 
 pub struct Actor {

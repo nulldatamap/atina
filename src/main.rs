@@ -60,7 +60,10 @@ impl Game {
     
     while !self.root.window_closed() {
       self.input.borrow_mut().update( self );
-      self.world.borrow_mut().update();
+      
+      while self.world.borrow().player_is_performing_action() {
+        self.world.borrow_mut().update();
+      }
       
       self.root.clear();
       self.world.borrow().render( &mut self.root );

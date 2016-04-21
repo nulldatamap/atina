@@ -73,6 +73,10 @@ impl World {
     } )
   }
   
+  pub fn player_is_performing_action( &self ) -> bool {
+    self.player.borrow().actor.action.is_active()
+  }
+  
   pub fn render<C : Console>( &self, ctx : &mut C ) {
     self.map.render( ctx );
     
