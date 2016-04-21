@@ -1,0 +1,19 @@
+[floor]
+name = "a floor"
+description = "It's a man-made floor."
+
+[tree]
+name = "a tree"
+description = "An average tree."
+
+[wall]
+name = "a wall"
+description = "It's a man-made wall."
+
+[ground]
+name = "the ground"
+description = "It's all natural ground"
+
+[rock]
+name = "rock"
+description = "A rock face, solid as it gets."

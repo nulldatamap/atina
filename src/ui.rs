@@ -1,55 +1,62 @@
-use super::tcod::{Color};
-use super::tcod::{Console, RootConsole};
+use tcod::console::{TextAlignment, BackgroundFlag};
+use tcod::{Console, RootConsole};
 
-pub type Position = (i32, i32);
+use ::util::ScreenPos;
 
 pub struct TextField {
-  position : Position,
-  text : String
+  position  : ScreenPos,
+  text      : String,
+  alignment : TextAlignment
 }
 
 impl TextField {
-  pub fn new( text : String, position : Position ) -> TextField {
+  pub fn new( text : String, position : ScreenPos
+            , alignment : TextAlignment ) -> TextField {
+              
     TextField {
-      text: text,
-      position: position
+      text:      text,
+      position:  position,
+      alignment: alignment
     }
   }
 
   pub fn render<C : Console>( &self, ctx : &mut C ) {
-    ctx.print( self.position.0, self.position.1, &self.text );
+    ctx.print_ex( self.position.x, self.position.y
+                , BackgroundFlag::None
+                , self.alignment
+                , &self.text );
   }
 }
 
-// Invariants:
-//  non_empty: elements.len() >= 1
-//  in_bounds: 0 <= selected < elements.len()   
 pub struct SelectionList {
-  position : Position,
-  elements : Vec<String>,
-  selected : usize,
-  wrapping : bool
+  position  : ScreenPos,
+  elements  : Vec<String>,
+  selected  : usize,
+  widest    : usize,
+  wrapping  : bool,
+  alignment : TextAlignment
 }
 
 impl SelectionList {
   
-  // Assures:
-  //  Invariants non_empty & in_bounds
-  //  selected == 0
-  pub fn new( elms : Vec<String>, position : Position, wrapping : bool ) -> SelectionList {
+  pub fn new( elms : Vec<String>, position : ScreenPos
+            , wrapping : bool, alignment : TextAlignment ) -> SelectionList {
+    
     assert!( !elms.is_empty(), "Invariant: `non_empty` was false." );
     
+    let widest =
+      elms.iter().fold( 0, |x, e| if e.len() > x { e.len() } else { x } );
+    
     SelectionList {
-      position: position,
-      elements: elms,
-      selected: 0,
-      wrapping: wrapping
+      position:  position,
+      elements:  elms,
+      selected:  0,
+      widest  :  widest,
+      wrapping:  wrapping,
+      alignment: alignment
     }
   }
   
-  // Assures:
-  //  Invariant in_bounds
-  //  abs( direction ) == 1
   fn move_selection( &mut self, direction : isize ) {
     use ::std::cmp::{min, max};
     
@@ -80,18 +87,21 @@ impl SelectionList {
     use ::tcod::chars;
     
     for (i, field) in self.elements.iter().enumerate() {
-      ctx.print( self.position.0, self.position.1 + i as i32, field );
+      ctx.print_ex( self.position.x, self.position.y + i as i32
+                  , BackgroundFlag::None
+                  , self.alignment
+                  , field );
     }
     
-    let x_pos = self.position.0;
-    let y_pos = self.position.1 + self.selected as i32;
+    let x_pos = self.position.x - self.widest as i32 / 2;
+    let y_pos = self.position.y + self.selected as i32;
     
     ctx.set_char_foreground( x_pos - 1, y_pos , ::tcod::colors::WHITE ); 
     ctx.set_char( x_pos - 1, y_pos , chars::ARROW2_E );
   }
   
   pub fn update( &mut self, root : &mut RootConsole ) -> Option<usize> {
-    use ::tcod::input::{Key, KeyCode};
+    use ::tcod::input::{KeyCode};
     
     let mkey = root.check_for_keypress( ::tcod::input::KEY_PRESSED );
     
