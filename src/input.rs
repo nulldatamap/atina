@@ -39,7 +39,7 @@ impl Input {
         
         if let Some( reason ) = maybe_reason {
           game.message_log.borrow_mut().add_message(
-            format!( "You're blocked by {}", reason ) );
+            format!( "{}", reason ) );
         }
       }
     }

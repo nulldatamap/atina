@@ -16,9 +16,9 @@ pub struct Stats {
 }
 
 pub struct Graphics {
-  symbol : char,
-  fg     : Color,
-  bg     : Color
+  pub symbol : char,
+  pub fg     : Color,
+  pub bg     : Color
 }
 
 pub enum ActionFailureReason<'a> {
@@ -32,7 +32,7 @@ impl<'a> Display for ActionFailureReason<'a> {
     
     match self {
       &BlockedByTile( t ) =>
-        write!( fmtr, "you were blocked by {}", t.description().name() ),
+        write!( fmtr, "You were blocked by {}", t.description().name() ),
       &BlockedByActor( a ) =>
         write!( fmtr, "{} is in your way!", a.description().name() )
     }
@@ -60,9 +60,9 @@ impl Action {
 pub struct Actor {
   pub active   : bool,
   pub action   : Action,
-  pos          : Position,
-  stats        : Stats,
-  graphics     : Graphics
+  pub pos          : Position,
+  pub stats        : Stats,
+  pub graphics     : Graphics
 }
 
 impl Describe for Actor {

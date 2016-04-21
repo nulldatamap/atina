@@ -99,39 +99,47 @@ pub struct Map {
 }
 
 impl Map {
-    
-  pub fn load( filePath : &Path ) -> Result<Map, MapLoadingError> {
+  pub fn load( filename : &str ) -> Result<Map, MapLoadingError> {
+    use toml::{Value};
     use self::MapLoadingError::*;
-      
-    let mut file = try!( File::open( filePath ) );
     
-    let mut file_contents = String::new();
-    try!( file.read_to_string( &mut file_contents ));
+    let mut data = load_data_file( filename );
     
-    let lines : Vec<&str> = file_contents.lines().collect();
+    let mut map_tbl = match data.remove( "map" ) {
+      Some( Value::Table( t ) ) => t,
+      _ => panic!( "Failed to decode data file: '{}'", filename )  
+    };
     
-    if lines.len() < 1 {
-      return Err( EmptyFile )
-    }
-    
-    let settings : Vec<&str> = lines[0].split( ',' ).map( str::trim ).collect();
-    
-    if settings.len() != 2 {
-      return Err( InvalidSettings )
-    }
-    
-    let width = try!( settings[0].parse::<usize>() );
-    let height = try!( settings[1].parse::<usize>() );
-    
-    if lines.len() != height + 1 {
-      return Err( InvalidHeight( lines.len(), height ) )
-    }
+    let (width, height) = match map_tbl.remove( "dimensions" ) {
+      Some( Value::Table( mut t ) ) => {
+        let w = match t.remove( "w" ) {
+          Some( Value::Integer( i ) ) => i as usize,
+          _ => panic!( "Failed to decode data file: '{}'", filename )
+        };
+        ( w, match t.remove( "h" ) {
+          Some( Value::Integer( i ) ) => i as usize,
+          _ => panic!( "Failed to decode data file: '{}'", filename )  
+        } )
+      },
+      _ => panic!( "Failed to decode data file: '{}'", filename )
+    };
     
     let mut tiles = Vec::with_capacity( width * height );
     
-    let mut player_position = None;
+    let mut player_position = Some( (5, 5).into() );
     
-    for (y, row) in lines[1..].iter().enumerate() {
+    let layout = match map_tbl.remove( "layout" ) {
+      Some( Value::String( l ) ) => l,
+      _ => panic!( "Failed to decode data file: '{}'", filename )
+    };
+    
+    let lines : Vec<&str> = layout.lines().collect();
+    
+    if lines.len() != height {
+      panic!( "Failed to decode data file: '{}'", filename )
+    }
+    
+    for (y, row) in lines[..].iter().enumerate() {
       if row.len() != width {
         return Err( InvalidWidth( row.len(), width ) )
       }
@@ -142,12 +150,7 @@ impl Map {
           continue;
         }
         
-        if chr == '@' {
-          tiles.push( Tile::Floor );
-          player_position = Some( Pos::new(x as u32, y as u32) );
-        } else {
-          return Err( InvalidTile( chr ) )
-        }
+        return Err( InvalidTile( chr ) )
       }
     }
     
@@ -189,9 +192,5 @@ impl Map {
                      , WHITE, BLACK );
     }
     
-    ctx.put_char_ex( self.player_position.x as i32
-                   , self.player_position.y as i32
-                   , '@'
-                   , WHITE, BLACK );
   }
 }

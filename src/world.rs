@@ -22,9 +22,10 @@ pub struct World {
 }
 
 impl World {
-  pub fn new( map_path : &Path ) -> Result<World, MapLoadingError> {
+  pub fn new( map_path : &str ) -> Result<World, MapLoadingError> {
     let map = try!( Map::load( map_path ) );
-    let player = Player::new( map.player_position );
+    let mut player = Player::new( map.player_position );
+    player.actor.graphics.symbol = '@';
     
     Ok( World {
       map:    map,

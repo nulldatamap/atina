@@ -40,7 +40,7 @@ impl Game {
     
     let mut world;
     
-    match World::new( Path::new( "data/test.map" ) ) {
+    match World::new( "data/test.toml" ) {
       Result::Err( MapLoadingError::ParseIntError( err ) ) => panic!( "{:?}", err.description() ),
       Result::Err( err ) => panic!( "{:?}", err ),
       Result::Ok( w ) => world = w

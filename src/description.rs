@@ -4,6 +4,8 @@ use std::cell::RefCell;
 use std::mem;
 use fnv::FnvHasher;
 
+use util::load_data_file;
+
 type HashMap<K, V> =
   collections::HashMap<K, V, hash::BuildHasherDefault<FnvHasher>>;
 
@@ -59,32 +61,11 @@ pub fn load_descriptions() {
 }
 
 fn load_file( name : &str, descs : &mut HashMap<String, Description> ) {
-  use std::path::Path;
-  use std::io::Read;
-  use std::fs::File;
-  use toml::{Parser, Value};
+  use toml::Value;
   
   let filename = format!( "data/{}.toml", name );
   
-  let mut data_file = File::open( Path::new( &filename ) )
-    .expect( &format!( "Failed to load data file: '{}'", filename ) );
-  
-  let file_size = data_file.metadata().map( |md| md.len() )
-    .expect( &format!( "Failed to get file size of data file '{}'", filename ) );
-  
-  let mut source = String::with_capacity( file_size as usize );
-  
-  data_file.read_to_string( &mut source )
-    .expect( &format!( "Failed to read data file: '{}'", filename ) );
-  
-  let mut parser = Parser::new( &source );
-  
-  let mut data;
-  
-  match parser.parse() {
-    None => panic!( "Failed to parse data file: '{}'", filename ),
-    Some( d ) => data = d
-  }
+  let mut data = load_data_file( &filename );
   
   for (entry_name, entry_value) in data.into_iter() {
     let mut entry_table;

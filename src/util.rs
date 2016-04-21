@@ -1,5 +1,7 @@
 
 use map::Map;
+use toml::Value;
+use std::collections::BTreeMap;
 
 pub type Position = Pos<u32>;
 pub type ScreenPos = Pos<i32>;
@@ -76,3 +78,29 @@ impl Direction {
     self.try_offset_position( pos, map ).expect( "offset out of bounds" )
   } 
 }
+
+pub fn load_data_file( filename : &str ) -> BTreeMap<String, Value> {
+  use std::path::Path;
+  use std::io::Read;
+  use std::fs::File;
+  use toml::{Parser, Value};
+  
+  let mut data_file = File::open( Path::new( &filename ) )
+    .expect( &format!( "Failed to load data file: '{}'", filename ) );
+  
+  let file_size = data_file.metadata().map( |md| md.len() )
+    .expect( &format!( "Failed to get file size of data file '{}'", filename ) );
+  
+  let mut source = String::with_capacity( file_size as usize );
+  
+  data_file.read_to_string( &mut source )
+    .expect( &format!( "Failed to read data file: '{}'", filename ) );
+  
+  let mut parser = Parser::new( &source );
+  
+  match parser.parse() {
+    None => panic!( "Failed to parse data file: '{}'", filename ),
+    Some( d ) => d
+  }
+}
+
