@@ -4,6 +4,8 @@ use std::num;
 use std::path::Path;
 use std::fs::File;
 
+use rustc_serialize::Decodable;
+
 use tcod::{Console};
 
 use util::*;
@@ -98,42 +100,30 @@ pub struct Map {
   pub player_position : Position
 }
 
+#[derive(RustcDecodable)]
+struct MapConfig {
+  dimensions : Pos<usize>,
+  player_position : Position,
+  layout : String,
+}
+
 impl Map {
   pub fn load( filename : &str ) -> Result<Map, MapLoadingError> {
-    use toml::{Value};
+    use toml::{Value, Decoder};
     use self::MapLoadingError::*;
     
     let mut data = load_data_file( filename );
     
     let mut map_tbl = match data.remove( "map" ) {
-      Some( Value::Table( t ) ) => t,
+      Some( t@Value::Table( _ ) ) => t,
       _ => panic!( "Failed to decode data file: '{}'", filename )  
     };
     
-    let (width, height) = match map_tbl.remove( "dimensions" ) {
-      Some( Value::Table( mut t ) ) => {
-        let w = match t.remove( "w" ) {
-          Some( Value::Integer( i ) ) => i as usize,
-          _ => panic!( "Failed to decode data file: '{}'", filename )
-        };
-        ( w, match t.remove( "h" ) {
-          Some( Value::Integer( i ) ) => i as usize,
-          _ => panic!( "Failed to decode data file: '{}'", filename )  
-        } )
-      },
-      _ => panic!( "Failed to decode data file: '{}'", filename )
-    };
+    let config = MapConfig::decode( &mut Decoder::new( map_tbl ) ).unwrap();
     
+    let lines : Vec<&str> = config.layout.lines().collect();
+    let (width, height) = config.dimensions.into();
     let mut tiles = Vec::with_capacity( width * height );
-    
-    let mut player_position = Some( (5, 5).into() );
-    
-    let layout = match map_tbl.remove( "layout" ) {
-      Some( Value::String( l ) ) => l,
-      _ => panic!( "Failed to decode data file: '{}'", filename )
-    };
-    
-    let lines : Vec<&str> = layout.lines().collect();
     
     if lines.len() != height {
       panic!( "Failed to decode data file: '{}'", filename )
@@ -156,15 +146,11 @@ impl Map {
     
     assert_eq!( tiles.len(), width * height );
     
-    if player_position.is_none() {
-      return Err( NoPlayerPosition )
-    }
-    
     Ok( Map {
       tiles: tiles,
       width: width,
       height: height,
-      player_position: player_position.unwrap()
+      player_position: config.player_position
     } )
   }
   

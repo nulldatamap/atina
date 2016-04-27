@@ -1,6 +1,6 @@
 [package]
 name = "atina"
-version = "0.2.4"
+version = "0.2.5"
 authors = ["Nulldata <nulldatamap@gmail.com>"]
 
 [dependencies]
@@ -8,3 +8,4 @@ tcod = "0.9"
 version = "^2.0"
 fnv = "^1.0"
 toml = "^0.1"
+rustc-serialize = "^0.3"

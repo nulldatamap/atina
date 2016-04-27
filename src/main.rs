@@ -3,6 +3,7 @@ extern crate version;
 extern crate tcod;
 extern crate fnv;
 extern crate toml;
+extern crate rustc_serialize;
 
 mod util;
 mod ui;

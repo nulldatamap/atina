@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 pub type Position = Pos<u32>;
 pub type ScreenPos = Pos<i32>;
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, RustcDecodable)]
 pub struct Pos<N> {
   pub x : N,
   pub y : N
